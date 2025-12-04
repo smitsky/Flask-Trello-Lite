@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}My Boards - Trello Lite{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">My Boards</h1>
+</div>
+
+{# 1. Form to Create a New Board #}
+<div class="card mb-5 border-primary shadow">
+    <div class="card-body">
+        <h5 class="card-title text-primary">🚀 Start a New Project</h5>
+        {# Change the form to stack the input and button #}
+        <form method="POST" action="{{ url_for('new_board') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
+            <input type="text" 
+                   name="title" 
+                   class="form-control form-control-lg mb-3" 
+                   placeholder="Enter a board name (e.g., Q4 Project Plan)" 
+                   required>
+            <button type="submit" class="btn btn-primary w-100">Create Board</button>
+        </form>
+    </div>
+</div>
+
+<hr>
+
+{# 2. Loop and Display Existing Boards #}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% if boards %}
+        {% for board in boards %}
+        {# ✅ ADD THIS CHECK: Skip any null or corrupted board objects #}
+        {% if board %} 
+        <div class="col">
+            <div class="card h-100 shadow-sm board-card board-card-primary">
+                <div class="card-body">
+                    {# Link to the specific board's detailed view #}
+                    <h5 class="card-title">
+                        <a href="{{ url_for('view_board', board_id=board.id) }}" class="text-decoration-none">
+                            {{ board.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted small">{{ board.lists|length }} Lists</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0 d-flex justify-content-end">
+                    {# ... snip ... #}
+                <div class="card-footer bg-transparent border-top-0 d-flex justify-content-end">
+                {# Use a POST form for deletion, which is safer than a GET link #}
+                <form method="POST" action="{{ url_for('delete_board', board_id=board.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                    class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Are you sure you want to delete the board: {{ board.title }}? This cannot be undone.')">Delete</button>
+                </form>
+            </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+{% else %}
+<div class="col-12">
+    <div class="alert alert-info" role="alert">
+        You don't have any boards yet. Create one above!
+    </div>
+</div>
+{% endif %}  {# ⬅️ ADD THIS: Closes the {% if boards %} block #}
+</div>
+{% endblock %}

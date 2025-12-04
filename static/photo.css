@@ -1,0 +1,113 @@
+/* minimal placeholder CSS — adjust as you like */
+body {
+  padding-top: 1rem;
+}
+img {
+  border-radius: 8px;
+}
+
+/* 1. Target the Specific Card on the Login Page */
+#login-card {
+    /* Set a maximum size for the card */
+    max-width: 450px; 
+    
+    /* Center the card horizontally on the page */
+    margin: 50px auto 0 auto; 
+    
+    /* Add some internal padding and a soft border */
+    padding: 20px;
+    border-radius: 12px;
+}
+
+/* 2. Style the Login Form Title */
+.card-title {
+    color: #007bff; /* Use Bootstrap's primary blue for the title */
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* 3. Give the Submit Button a custom look */
+.btn-primary {
+    /* Override Bootstrap primary blue with a custom purple */
+    background-color: #5a008a; 
+    border-color: #5a008a;
+    transition: background-color 0.3s ease; /* Add a smooth transition for hover effect */
+}
+
+/* 4. Add a Hover Effect for the Custom Button */
+.btn-primary:hover {
+    background-color: #7b2c9a; /* Lighter purple on hover */
+    border-color: #7b2c9a;
+}
+
+body {
+    /* Define a linear gradient from top-left to bottom-right */
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    
+    /* Ensure the background covers the entire viewport */
+    min-height: 100vh; 
+    
+    /* Optional: Hide scrollbar if content is short */
+    overflow-y: auto;
+    
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.homepage-bg {
+    /* Reference the image file path */
+    background-image: url('amsterdam-1150319_1920.jpg'); 
+    
+    /* Center the image */
+    background-position: center center;
+    
+    /* Scale the image to cover the entire viewport, preventing white space */
+    background-size: cover; 
+    
+    /* Fix the image so it doesn't scroll with the content */
+    background-attachment: fixed; 
+    
+    /* Ensure the body takes up the full height of the viewport */
+    min-height: 100vh;
+}
+
+/* Ensure the body text is readable (e.g., white text) */
+.homepage-bg {
+    /* ... existing background styles ... */
+    
+    /* Set text color to white for better contrast */
+    color: white; 
+}
+
+/* Style the main content area (the <div> with class="container") */
+/* Since the container is outside of the body_class block, we target it like this: */
+.homepage-bg .container {
+    /* Give the content area a semi-transparent, dark background */
+    background-color: rgba(0, 0, 0, 0.2); 
+    
+    /* Round the corners and add padding for a 'card' effect */
+    border-radius: 10px;
+    padding: 30px; 
+}
+
+/* Ensure navbar links are also visible against the dark background */
+/* We can't target the navbar easily since it's outside the container, */
+/* so you might want to force the navbar to be dark in your base.html */
+
+/* Custom CSS for Board Cards */
+
+/* Defines the standard card style and hover effect */
+.board-card {
+    transition: all 0.2s ease-in-out;
+    border-left: 5px solid transparent; /* Prepare for the accent color */
+    cursor: pointer;
+}
+
+.board-card:hover {
+    transform: translateY(-3px); /* Lifts the card slightly */
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; /* Stronger shadow on hover */
+}
+
+/* Defines the accent color (using Bootstrap Primary blue as an example) */
+.board-card-primary {
+    border-left-color: #0d6efd; 
+}

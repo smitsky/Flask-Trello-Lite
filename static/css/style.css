@@ -1,0 +1,14 @@
+/* Override Bootstrap's primary button color */
+.btn-primary {
+    background-color: #5a008a; /* Custom Purple */
+    border-color: #5a008a;
+}
+
+/* Add a style for a specific part of your login form */
+#login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}

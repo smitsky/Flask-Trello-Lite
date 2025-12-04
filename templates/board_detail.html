@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ board.title }} - Board Detail{% endblock %}
+
+{% block content %}
+
+{# 1. Board Header and Title #}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-4">{{ board.title }}</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        &larr; Back to Boards
+    </a>
+</div>
+
+{# 2. Container for Lists (Trello-style horizontal layout) #}
+<div class="board-container d-flex flex-nowrap overflow-auto pb-3">
+
+    {# Loop through all Lists associated with this Board #}
+    {% for list_obj in board.lists %}
+    <div class="list-wrapper flex-shrink-0 me-3">
+        <div class="list-card card shadow-sm bg-light">
+            
+            {# Card Header with Title and Delete Button #}
+            <div class="card-header h5 py-2 d-flex justify-content-between align-items-center">
+                {{ list_obj.title }}
+
+                {# List Deletion Form #}
+                <form method="POST" action="{{ url_for('delete_list', list_id=list_obj.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="btn btn-sm btn-outline-danger p-0 border-0"
+                            style="font-size: 1.25rem;"
+                            onclick="return confirm('Delete list {{ list_obj.title }} and all its cards?')">
+                        &times;
+                    </button>
+                </form>
+            </div>
+            
+            {# Card Body (Contains Cards and Add Card Form) #}
+            <div class="card-body list-body"> 
+
+                {# Display Cards #}
+{% if list_obj.cards %}
+    {% for card in list_obj.cards %}
+        <div class="card card-body mb-2 small shadow-sm">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>{{ card.content }}</div>
+
+                {# Card Deletion Form #}
+                <form method="POST" action="{{ url_for('delete_card', card_id=card.id) }}" class="ms-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="btn btn-sm btn-outline-danger p-0 border-0"
+                            style="font-size: 1rem; line-height: 1;"
+                            onclick="return confirm('Delete this card?')">
+                        &times;
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+                    <p class="text-muted small">No cards yet.</p>
+                {% endif %}
+
+                {# Add Card Form #}
+                <form method="POST" action="{{ url_for('create_card', list_id=list_obj.id) }}" class="mt-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
+                    <input type="text" name="content" class="form-control form-control-sm mb-1" placeholder="New card content..." required>
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">Add Card</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    {# 3. "Add a List" Column #}
+    <div class="list-wrapper flex-shrink-0">
+        <div class="card bg-transparent border-dashed p-3" style="width: 272px; min-height: 100px;">
+            <h6 class="mb-3 text-muted">Add a new list</h6>
+            <form method="POST" action="{{ url_for('new_list', board_id=board.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
+                <input type="text" name="title" class="form-control mb-2" placeholder="List title..." required>
+                <button type="submit" class="btn btn-success w-100">Add List</button>
+            </form>
+        </div>
+    </div>
+
+{# Optional: Add a style block for the horizontal layout #}
+{% block head %}
+<style>
+    /* Gives a standard Trello list width and prevents wrapping */
+    .list-wrapper {
+        width: 272px; 
+    }
+    /* Allows for scrolling and removes default body margin for clean header */
+    .board-container {
+        padding-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% endblock %}
