@@ -10,9 +10,11 @@ from urllib.parse import urlparse, urljoin
 
 from flask_wtf import CSRFProtect
 from forms import LoginForm, RegisterForm
-
 import os
+from flask import jsonify
 
+# ⬇️ Import desc for use in index
+from sqlalchemy import desc
 
 from dotenv import load_dotenv
 load_dotenv()  # ← This loads .env into os.environ
@@ -22,6 +24,8 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
+# 👇 ADDED: Increase CSRF token timeout to 12 hours (43200 seconds)
+app.config['WTF_CSRF_TIME_LIMIT'] = 43200
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
@@ -76,6 +80,12 @@ from flask_login import login_required, current_user # Make sure these are impor
 @app.route('/')
 @login_required # Ensures only logged-in users can see this page
 def index():
+    # In app.py, inside your index route:
+    # from sqlalchemy import desc # ⬅️ Make sure you import this if you use it (Moved to top of file)
+
+    boards = Board.query.filter_by(user_id=current_user.id)\
+                     .order_by(desc(Board.id))\
+                     .all()
     # Fetch boards related to the current user (Flask-SQLAlchemy relationship)
     user_boards = current_user.boards 
     
@@ -141,30 +151,50 @@ def register():
 
 # In app.py, replace the existing new_board route:
 
-@app.route('/boards/new', methods=['POST']) # Removed GET method since the form is on the index page
-@login_required # Only logged-in users can create boards
+@app.route('/boards/new', methods=['POST'])
+@login_required 
 def new_board():
-    # Board title is retrieved from the index.html form input named 'title'
     board_title = request.form.get('title') 
     
     if not board_title:
+        # Check if it's an AJAX request (optional, but good practice)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Board title cannot be empty.'}), 400
         flash("Board title cannot be empty.", 'danger')
         return redirect(url_for('index'))
         
-    # Correctly associate the new board with the current user
     new_board = Board(
         title=board_title,
-        user_id=current_user.id # 🔑 CRUCIAL: Assigns board ownership
+        user_id=current_user.id 
     )
 
     try:
         db.session.add(new_board)
         db.session.commit()
+        
+        # 🔑 CHANGE: If it's an AJAX request, return JSON success
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+             # Return the newly created board data for Vue to display instantly
+            return jsonify({
+                'success': True, 
+                'message': f'Board "{board_title}" created successfully!',
+                'board': {
+                    'id': new_board.id,
+                    'title': new_board.title,
+                    'list_count': 0 # New boards have 0 lists
+                }
+            }), 201
+            
         flash(f'Board "{board_title}" created successfully!', 'success')
         return redirect(url_for('index'))
         
     except Exception as e:
         db.session.rollback()
+        
+        # 🔑 CHANGE: If it's an AJAX request, return JSON failure
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+             return jsonify({'success': False, 'message': 'There was an issue creating the board.'}), 500
+        
         flash('There was an issue creating the board.', 'danger')
         print(f"Board Creation Error: {e}")
         return redirect(url_for('index'))

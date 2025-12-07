@@ -7,19 +7,26 @@
     <h1 class="h3">My Boards</h1>
 </div>
 
-{# 1. Form to Create a New Board #}
-<div class="card mb-5 border-primary shadow">
+{# 1. Vue Component for Creating a New Board #}
+<div id="new-board-app" class="card mb-5 border-primary shadow">
     <div class="card-body">
         <h5 class="card-title text-primary">🚀 Start a New Project</h5>
-        {# Change the form to stack the input and button #}
-        <form method="POST" action="{{ url_for('new_board') }}">
+        
+        <form @submit.prevent="createBoard">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> 
+            
             <input type="text" 
-                   name="title" 
+                   v-model="newBoardTitle"
                    class="form-control form-control-lg mb-3" 
                    placeholder="Enter a board name (e.g., Q4 Project Plan)" 
-                   required>
-            <button type="submit" class="btn btn-primary w-100">Create Board</button>
+                   required
+                   :disabled="isSubmitting"> 
+            
+            <button type="submit" class="btn btn-primary w-100" :disabled="isSubmitting">
+    <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+    <template v-if="isSubmitting">Creating...</template>
+    <template v-else>Create Board</template>
+</button>
         </form>
     </div>
 </div>
@@ -45,7 +52,6 @@
                 </div>
                 <div class="card-footer bg-transparent border-top-0 d-flex justify-content-end">
                     {# ... snip ... #}
-                <div class="card-footer bg-transparent border-top-0 d-flex justify-content-end">
                 {# Use a POST form for deletion, which is safer than a GET link #}
                 <form method="POST" action="{{ url_for('delete_board', board_id=board.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -56,7 +62,6 @@
             </div>
             </div>
         </div>
-    </div>
     {% endif %}
     {% endfor %}
 {% else %}
@@ -67,4 +72,76 @@
 </div>
 {% endif %}  {# ⬅️ ADD THIS: Closes the {% if boards %} block #}
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+    // This value is rendered by the server before the page loads
+    const CSRF_TOKEN = "{{ csrf_token() }}"; 
+</script>
+
+<script>
+    const { createApp, ref } = Vue;
+
+    createApp({
+        setup() {
+            // Data properties
+            const newBoardTitle = ref('');
+            const isSubmitting = ref(false);
+            
+            // NOTE: The old logic to read the token from the DOM is now REMOVED.
+
+            // Method to handle form submission
+            async function createBoard() {
+                if (!newBoardTitle.value.trim()) return;
+
+                isSubmitting.value = true;
+
+                // 1. Create FormData for Flask compatibility
+                const formData = new FormData();
+                formData.append('title', newBoardTitle.value);
+                // 🔑 Use the new globally injected token
+                formData.append('csrf_token', CSRF_TOKEN); 
+                
+                try {
+                    const response = await fetch("{{ url_for('new_board') }}", {
+                        method: 'POST',
+                        // Set a custom header for Flask to recognize an AJAX request
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData // Send the data as FormData
+                    });
+
+                    // Check if the submission was successful
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        newBoardTitle.value = '';
+                        // Reload the page to see the new board (as intended for this demo)
+                        window.location.reload(); 
+
+                    } else {
+                        const errorData = await response.json();
+                        // Display the specific error message from the Flask JSON response
+                        alert(`Error creating board: ${errorData.message}`); 
+                    }
+
+                } catch (error) {
+                    console.error('Network or processing error:', error);
+                    // This error now only catches network issues, not Flask validation errors
+                    alert('A critical network error occurred while submitting the board.'); 
+                } finally {
+                    isSubmitting.value = false;
+                }
+            }
+
+            return {
+                newBoardTitle,
+                isSubmitting,
+                // csrfToken is removed from here
+                createBoard
+            };
+        }
+    }).mount('#new-board-app'); // Mount the app to the new board form element
+</script>
 {% endblock %}
